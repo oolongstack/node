@@ -7,6 +7,7 @@ function Module(id) {
   this.exports = {}; // 默认的导出对象
 }
 Module.prototype.load = function () {
+  console.log("加载");
   const extension = path.extname(this.id);
   Module._extensions[extension](this); // 加载不同文件 使用不同策略
 };
@@ -37,6 +38,7 @@ Module._extensions = {
     module.exports = JSON.parse(content);
   },
 };
+Module._cache = {};
 Module._resolveFilename = function (id) {
   const filePath = path.resolve(__dirname, id);
   const isExist = fs.existsSync(filePath); // 文件路径是否存在
@@ -51,14 +53,21 @@ Module._resolveFilename = function (id) {
 };
 function myrequire(id) {
   const filePath = Module._resolveFilename(id); // 根据相对路径获取绝对路径
+  if (Module._cache[filePath]) return Module._cache[filePath].exports;
+
   const module = new Module(filePath);
+  Module._cache[filePath] = module;
+
   module.load(); // 加载该模块
   return module.exports; // require返回的就是module.exports
 }
 
 // ----------------------------
 const a = myrequire("./a.js");
+const b = myrequire("./a.js");
+
 console.log(a);
+console.log(b);
 // setTimeout(() => {
 //   console.log(a.b);
 // }, 2000);
