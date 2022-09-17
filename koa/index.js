@@ -1,3 +1,7 @@
 const Koa = require("koa");
 
-const koa = new Koa();
+const app = new Koa();
+
+app.listen(3000, () => {
+  console.log("server start 3000");
+});
