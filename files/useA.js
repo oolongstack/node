@@ -1,17 +1,37 @@
 const path = require("path");
 const fs = require("fs");
+const vm = require("vm");
 //实现cjs
 function Module(id) {
   this.id = id;
   this.exports = {}; // 默认的导出对象
 }
 Module.prototype.load = function () {
-  // console.log(this);
   const extension = path.extname(this.id);
   Module._extensions[extension](this); // 加载不同文件 使用不同策略
 };
 Module._extensions = {
-  ".js"(module) {},
+  ".js"(module) {
+    const source = fs.readFileSync(module.id);
+    const wrapper = [
+      "(function (exports,module,require,__dirname,__filename){",
+      "})",
+    ];
+    const script = wrapper[0] + source + wrapper[1];
+    // console.log(script);
+    const fn = vm.runInThisContext(script);
+
+    // console.log(fn, typeof fn);
+    const exports = module.exports;
+    fn.call(
+      module,
+      exports,
+      module,
+      myrequire,
+      path.dirname(module.id),
+      module.id
+    );
+  },
   ".json"(module) {
     const content = fs.readFileSync(module.id);
     module.exports = JSON.parse(content);
@@ -37,8 +57,8 @@ function myrequire(id) {
 }
 
 // ----------------------------
-const a = myrequire("./a.json");
-console.log(a.name);
+const a = myrequire("./a.js");
+console.log(a);
 // setTimeout(() => {
 //   console.log(a.b);
 // }, 2000);
